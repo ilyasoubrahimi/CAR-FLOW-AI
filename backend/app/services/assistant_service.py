@@ -27,12 +27,17 @@ class AssistantService:
         # 3. Tool Execution Loop
         tools_results = {}
         if intent == "search_vehicles":
-            # Mocking parameter extraction for the demo
-            vehicles = await self._tool_search_vehicles(category=None)
+            # Attempt to extract a category from the text via the provider
+            params = await self.provider.extract_parameters(text, {"category": "string"})
+            category = params.get("category")
+            vehicles = await self._tool_search_vehicles(category=category)
             tools_results["vehicles"] = vehicles
         elif intent == "calculate_quote":
-            # Mocking parameters
-            quote = await self._tool_calculate_quote(vehicle_id=1)
+            # In a real flow, we'd extract vehicle_id from context or text
+            # For demo, we use the first available vehicle if none specified
+            params = await self.provider.extract_parameters(text, {"vehicle_id": "integer"})
+            vehicle_id = params.get("vehicle_id", 1)
+            quote = await self._tool_calculate_quote(vehicle_id=vehicle_id)
             tools_results["quote"] = quote
 
         # 4. Generate Response
@@ -52,7 +57,10 @@ class AssistantService:
             "conversation_id": conversation_id,
             "response": response_text,
             "suggested_actions": self._get_suggested_actions(intent),
-            "reservation_context": {}
+            "reservation_context": {
+                "intent": intent,
+                "extracted_params": tools_results
+            }
         }
 
     async def _get_conversation_history(self, conversation_id: int) -> List[Dict[str, str]]:
@@ -64,17 +72,22 @@ class AssistantService:
 
     def _get_suggested_actions(self, intent: str) -> List[str]:
         if intent == "search_vehicles":
-            return ["Check availability", "Compare cars"]
+            return ["Check availability", "Compare cars", "Book now"]
+        if intent == "calculate_quote":
+            return ["Reserve this car", "Change dates"]
         return ["Start reservation", "Talk to agent"]
 
     # Tool Implementations
     async def _tool_search_vehicles(self, category: Optional[str] = None):
         repo = VehicleRepository(self.session)
-        return await repo.get_all()
+        if category:
+            # Use the newly implemented search_vehicles for filtered results
+            return await repo.search_vehicles(category=category)
+        return await repo.search_vehicles()
 
     async def _tool_calculate_quote(self, vehicle_id: int):
         service = PricingService(self.session)
-        # Mock dates for demo
+        # Mock dates for demo: today to +3 days
         from datetime import datetime, timedelta
         return await service.calculate_quote(
             vehicle_id,
