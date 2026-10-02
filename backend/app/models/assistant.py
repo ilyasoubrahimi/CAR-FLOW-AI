@@ -23,7 +23,7 @@ class Message(Base):
     conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"))
     role: Mapped[str] = mapped_column(String(50)) # USER, ASSISTANT, SYSTEM, TOOL
     content: Mapped[str] = mapped_column(Text)
-    metadata: Mapped[str] = mapped_column(Text, nullable=True) # JSON store
+    msg_metadata: Mapped[str] = mapped_column(Text, nullable=True) # JSON store
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     conversation: Mapped["Conversation"] = relationship("Conversation", back_populates="messages")

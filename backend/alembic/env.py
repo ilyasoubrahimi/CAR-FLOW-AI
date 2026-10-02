@@ -1,13 +1,16 @@
 from logging.config import fileConfig
 import asyncio
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+import os
+from sqlalchemy import engine_from_config, pool
+from sqlalchemy.ext.asyncio import AsyncEngine
 from alembic import context
 
-from app.core.database import Base, AsyncSessionLocal
-from app.models.vehicle import Vehicle, Location, Company, User
+# Import models to ensure they are registered with Base.metadata
+from app.core.database import Base
+from app.models.vehicle import Company, User, Location, Vehicle, VehicleImage
 from app.models.reservation import Customer, Reservation, Extra, ReservationExtra, PricingRule
 from app.models.assistant import Conversation, Message, Review, AuditLog
+from app.core.config import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -17,7 +20,10 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Use the models' metadata for autogenerate support
+# Override the sqlalchemy.url in alembic.ini with the one from settings
+# to avoid putting credentials in the ini file.
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+
 target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
@@ -35,13 +41,18 @@ def run_migrations_offline() -> None:
 
 async def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-    # Use the async engine from our database config
-    from app.core.database import engine
+    # Use create_async_engine instead of AsyncEngine class directly
+    from sqlalchemy.ext.asyncio import create_async_engine
 
-    # For Alembic to work with AsyncConnection, we use the run_sync method
-    # to call the synchronous migration logic.
-    async with engine.begin() as conn:
-        await conn.run_sync(do_run_migrations)
+    connectable = create_async_engine(
+        settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://"),
+        # echo=True, # Set to True for debugging SQL
+    )
+
+    async with connectable.begin() as connection:
+        await connection.run_sync(do_run_migrations)
+
+    await connectable.dispose()
 
 def do_run_migrations(connection):
     context.configure(
@@ -56,6 +67,4 @@ def do_run_migrations(connection):
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    # Alembic's online mode normally expects a synchronous function.
-    # We wrap the async function in asyncio.run.
     asyncio.run(run_migrations_online())
