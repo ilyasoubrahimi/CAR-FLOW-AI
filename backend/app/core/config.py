@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     FRONTEND_URL: str = "http://localhost:3000"
 
-    # Added missing fields to prevent Pydantic ValidationError
+    # Email Configuration
     EMAIL_PROVIDER: Optional[str] = None
     EMAIL_API_KEY: Optional[str] = None
     ADMIN_SEED_PASSWORD: Optional[str] = None

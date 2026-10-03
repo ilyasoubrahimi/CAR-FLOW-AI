@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.routes import vehicles, reservations, auth, availability, customers, company, extras, analytics, assistant, whatsapp
+from app.api.routes import vehicles, reservations, auth, availability, customers, company, extras, analytics, assistant, whatsapp, payments
 from app.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -27,6 +27,7 @@ app.include_router(extras.router, prefix=f"{settings.API_V1_STR}/extras", tags=[
 app.include_router(analytics.router, prefix=f"{settings.API_V1_STR}/analytics", tags=["Analytics"])
 app.include_router(assistant.router, prefix=f"{settings.API_V1_STR}/assistant", tags=["AI Assistant"])
 app.include_router(whatsapp.router, prefix=f"/webhooks/twilio", tags=["WhatsApp Webhook"])
+app.include_router(payments.router, prefix=f"{settings.API_V1_STR}/payments", tags=["Payments"])
 
 @app.get("/")
 async def root():

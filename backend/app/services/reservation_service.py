@@ -5,16 +5,18 @@ from datetime import datetime
 import uuid
 from typing import Optional, List
 from app.models.reservation import Reservation, ReservationStatus, ReservationExtra, Extra
-from app.models.vehicle import Vehicle
+from app.models.vehicle import Vehicle, Location
 from app.models.reservation import Customer
 from app.services.availability_service import AvailabilityService
 from app.services.pricing_service import PricingService
+from app.services.notification_service import MockNotificationService
 
 class ReservationService:
     def __init__(self, session: AsyncSession):
         self.session = session
         self.availability_service = AvailabilityService(session)
         self.pricing_service = PricingService(session)
+        self.notification_service = MockNotificationService()
 
     def _generate_reservation_code(self) -> str:
         # Format: MRK-XXXX (e.g., MRK-1042)
@@ -29,13 +31,21 @@ class ReservationService:
         # 2. Calculate Final Price
         quote = await self.pricing_service.calculate_quote(vehicle_id, pickup_datetime, return_datetime, extra_ids)
 
+        # 3. Determine Locations (use first active location as default)
+        loc_res = await self.session.execute(select(Location).where(Location.active == True).limit(1))
+        default_location = loc_res.scalar_one_or_none()
+        if not default_location:
+            raise ValueError("No active rental locations available")
+
+        location_id = default_location.id
+
         # 3. Create Reservation Object
         reservation = Reservation(
             reservation_code=self._generate_reservation_code(),
             customer_id=customer_id,
             vehicle_id=vehicle_id,
-            pickup_location_id=1, # Default to first location for now
-            return_location_id=1,
+            pickup_location_id=location_id,
+            return_location_id=location_id,
             pickup_datetime=pickup_datetime,
             return_datetime=return_datetime,
             status=ReservationStatus.DRAFT,
@@ -92,6 +102,21 @@ class ReservationService:
             # 4. Update Status
             res.status = ReservationStatus.CONFIRMED
             await self.session.commit()
+
+            # 5. Send Notifications
+            customer = await self.session.get(Customer, res.customer_id)
+            if customer:
+                await self.notification_service.send_email(
+                    customer.email,
+                    "Reservation Confirmed - Marrakech Drive",
+                    f"Your reservation {res.reservation_code} is confirmed. We look forward to seeing you!"
+                )
+                if customer.phone:
+                    await self.notification_service.send_whatsapp(
+                        customer.phone,
+                        f"Confirmation: Your Marrakech Drive reservation {res.reservation_code} is confirmed! ✅"
+                    )
+
             return res
 
     async def cancel_reservation(self, reservation_id: int) -> Reservation:
