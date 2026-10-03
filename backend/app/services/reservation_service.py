@@ -6,7 +6,7 @@ import uuid
 from typing import Optional, List
 from app.models.reservation import Reservation, ReservationStatus, ReservationExtra, Extra
 from app.models.vehicle import Vehicle
-from app.models.customer import Customer
+from app.models.reservation import Customer
 from app.services.availability_service import AvailabilityService
 from app.services.pricing_service import PricingService
 
