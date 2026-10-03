@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from typing import Optional
+from typing import Optional, Union
 from app.models.vehicle import User
 from app.schemas.auth import UserLogin
 
@@ -12,8 +12,8 @@ class UserRepository:
         result = await self.session.execute(select(User).where(User.username == username))
         return result.scalar_one_or_none()
 
-    async def get_by_id(self, user_id: int) -> Optional[User]:
-        return await self.session.get(User, user_id)
+    async def get_by_id(self, user_id: Union[int, str]) -> Optional[User]:
+        return await self.session.get(User, int(user_id))
 
     async def create_admin(self, user_in: UserLogin, password_hash: str) -> User:
         user = User(

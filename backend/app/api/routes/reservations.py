@@ -1,10 +1,32 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.api.deps import get_db
+from sqlalchemy.future import select
+from typing import List, Optional
+from datetime import datetime
+from app.api.deps import get_db, get_admin_user
 from app.services.reservation_service import ReservationService
 from app.schemas.reservation import ReservationCreate, ReservationRead
+from app.models.reservation import Reservation
 
 router = APIRouter()
+
+@router.get("/", response_model=List[ReservationRead])
+async def list_reservations(
+    status: Optional[str] = Query(None),
+    vehicle_id: Optional[int] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    admin=Depends(get_admin_user)
+):
+    # Note: ReservationService currently doesn't have a list method with filters.
+    # We will use the session directly for this admin view.
+    query = select(Reservation)
+    if status:
+        query = query.where(Reservation.status == status)
+    if vehicle_id:
+        query = query.where(Reservation.vehicle_id == vehicle_id)
+
+    result = await db.execute(query)
+    return result.scalars().all()
 
 @router.post("/", response_model=ReservationRead, status_code=status.HTTP_201_CREATED)
 async def create_reservation(
