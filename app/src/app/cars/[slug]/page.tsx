@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { apiRequest } from "@/lib/api-client";
+import { useBookingStore } from "@/store/useBookingStore";
 import {
   Users,
   Briefcase,
@@ -37,6 +38,7 @@ interface Vehicle {
 
 export default function VehicleDetailPage() {
   const { slug } = useParams();
+  const { setVehicle: setBookingVehicle, setDates } = useBookingStore();
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -139,6 +141,7 @@ export default function VehicleDetailPage() {
                   <input
                     type="date"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 text-sm focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-all"
+                    onChange={(e) => setDates(e.target.value, "")}
                   />
                 </div>
               </div>
@@ -150,6 +153,7 @@ export default function VehicleDetailPage() {
                   <input
                     type="date"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 text-sm focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-all"
+                    onChange={(e) => setDates("", e.target.value)}
                   />
                 </div>
               </div>

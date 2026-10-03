@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { AuthButton } from "@/components/auth/AuthButton";
 
 export const Header = ({ className }: { className?: string }) => {
   return (
@@ -14,12 +15,15 @@ export const Header = ({ className }: { className?: string }) => {
           <Link href="/book" className="text-zinc-600 hover:text-black dark:text-zinc-400 dark:hover:text-white transition-colors">Booking</Link>
           <Link href="/my-rental" className="text-zinc-600 hover:text-black dark:text-zinc-400 dark:hover:text-white transition-colors">My Rental</Link>
         </nav>
-        <Link
-          href="/book"
-          className="rounded-full bg-black px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
-        >
-          Reserve Now
-        </Link>
+        <div className="flex items-center gap-4">
+          <AuthButton />
+          <Link
+            href="/book"
+            className="hidden sm:block rounded-full bg-black px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+          >
+            Reserve Now
+          </Link>
+        </div>
       </div>
     </header>
   );

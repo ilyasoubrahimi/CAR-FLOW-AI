@@ -69,6 +69,34 @@ function BookingContent() {
   const handleConfirmBooking = async () => {
     setLoading(true);
     setError(null);
+
+    // Validation
+    if (!pickupDate || !returnDate) {
+      setError("Please select both pickup and return dates.");
+      setLoading(false);
+      return;
+    }
+    if (new Date(pickupDate) >= new Date(returnDate)) {
+      setError("Return date must be after the pickup date.");
+      setLoading(false);
+      return;
+    }
+    if (!customerDetails.firstName || !customerDetails.lastName || !customerDetails.email || !customerDetails.phone || !customerDetails.passportNumber) {
+      setError("Please fill in all customer details.");
+      setLoading(false);
+      return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(customerDetails.email)) {
+      setError("Please enter a valid email address.");
+      setLoading(false);
+      return;
+    }
+    if (customerDetails.passportNumber.length < 6) {
+      setError("Passport number is too short.");
+      setLoading(false);
+      return;
+    }
+
     try {
       // 1. Create Draft
       const draft = await apiRequest<{ id: string, code: string }>(`/reservations/`, {
@@ -280,11 +308,18 @@ function BookingContent() {
                     <span className="text-zinc-500">Customer</span>
                     <span className="font-medium">{customerDetails.firstName} {customerDetails.lastName}</span>
                   </div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-zinc-500">Payment Method</span>
+                    <span className="font-bold text-black dark:text-white">Pay at pickup</span>
+                  </div>
                   <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-4" />
                   <div className="flex justify-between text-xl font-bold">
                     <span>Total Estimated</span>
                     <span>{totalPrice ? `${totalPrice} MAD` : "Calculating..."}</span>
                   </div>
+                  <p className="text-[10px] text-zinc-400 mt-4 text-center italic">
+                    No online payment is required. You will pay upon vehicle pickup.
+                  </p>
                 </div>
 
                 {error && (

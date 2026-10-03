@@ -7,6 +7,8 @@ import { apiRequest } from "@/lib/api-client";
 import { MessageCircle, X, Send, Bot, User, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface Message {
   role: "assistant" | "user";
@@ -14,15 +16,34 @@ interface Message {
   timestamp: Date;
 }
 
+interface ChatState {
+  messages: Message[];
+  setMessages: (messages: Message[]) => void;
+  addMessage: (message: Message) => void;
+}
+
+const useChatStore = create<ChatState>()(
+  persist(
+    (set) => ({
+      messages: [
+        {
+          role: "assistant",
+          content: "Welcome to Marrakech Drive. I'm your AI Concierge. How can I help you find the perfect luxury vehicle today?",
+          timestamp: new Date()
+        }
+      ],
+      setMessages: (messages) => set({ messages }),
+      addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
+    }),
+    {
+      name: 'marrakech-drive-ai-chat-storage',
+    }
+  )
+);
+
 export function AIAssistant() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: "Welcome to Marrakech Drive. I'm your AI Concierge. How can I help you find the perfect luxury vehicle today?",
-      timestamp: new Date()
-    }
-  ]);
+  const { messages, addMessage } = useChatStore();
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -38,7 +59,7 @@ export function AIAssistant() {
     if (!input.trim() || isLoading) return;
 
     const userMsg: Message = { role: "user", content: input, timestamp: new Date() };
-    setMessages(prev => [...prev, userMsg]);
+    addMessage(userMsg);
     setInput("");
     setIsLoading(true);
 
@@ -48,17 +69,17 @@ export function AIAssistant() {
         body: JSON.stringify({ message: input })
       });
 
-      setMessages(prev => [...prev, {
+      addMessage({
         role: "assistant",
         content: response.reply,
         timestamp: new Date()
-      }]);
+      });
     } catch (error) {
-      setMessages(prev => [...prev, {
+      addMessage({
         role: "assistant",
         content: "I apologize, I'm having trouble connecting to my system. Please try again in a moment.",
         timestamp: new Date()
-      }]);
+      });
     } finally {
       setIsLoading(false);
     }

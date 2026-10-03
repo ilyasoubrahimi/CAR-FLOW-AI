@@ -1,7 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+}
+
 interface BookingState {
+  user: User | null;
+  token: string | null;
   vehicleId: string | null;
   pickupDate: string;
   returnDate: string;
@@ -21,12 +30,15 @@ interface BookingState {
   toggleExtra: (extraId: string) => void;
   setCustomerDetails: (details: Partial<BookingState['customerDetails']>) => void;
   setStep: (step: number) => void;
+  setAuth: (user: User | null, token: string | null) => void;
   reset: () => void;
 }
 
 export const useBookingStore = create<BookingState>()(
   persist(
     (set) => ({
+      user: null,
+      token: null,
       vehicleId: null,
       pickupDate: new Date().toISOString().split('T')[0],
       returnDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
@@ -53,7 +65,10 @@ export const useBookingStore = create<BookingState>()(
         customerDetails: { ...state.customerDetails, ...details }
       })),
       setStep: (step) => set({ step }),
+      setAuth: (user, token) => set({ user, token }),
       reset: () => set({
+        user: null,
+        token: null,
         vehicleId: null,
         extras: [],
         step: 1,
