@@ -27,9 +27,10 @@ class VehicleRepository:
         Advanced search for vehicles with filtering and availability checks.
         """
         from sqlalchemy import and_, or_, not_, exists
+        from sqlalchemy.orm import selectinload
         from app.models.reservation import Reservation, ReservationStatus
 
-        query = select(Vehicle)
+        query = select(Vehicle).options(selectinload(Vehicle.images))
 
         # 1. Basic Availability (if dates provided)
         if pickup_date and return_date:

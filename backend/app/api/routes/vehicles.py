@@ -63,8 +63,10 @@ async def read_vehicles(
         img_result = await db.execute(select(VehicleImage).where(VehicleImage.vehicle_id == v.id))
         images = img_result.scalars().all()
         # Manually construct the read model with images
+        vehicle_data = v.__dict__.copy()
+        vehicle_data.pop('images', None)
         v_with_img = VehicleReadWithImages(
-            **v.__dict__,
+            **vehicle_data,
             images=images
         )
         vehicles_with_images.append(v_with_img)

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from decimal import Decimal
 
@@ -50,17 +50,6 @@ class VehicleRead(VehicleBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-class VehicleReadWithImages(VehicleRead):
-    images: List["VehicleImageRead"]
-
-class VehicleDiscoveryResponse(BaseModel):
-    total: int
-    vehicles: List[VehicleReadWithImages]
-    filters_applied: Dict[str, Any]
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class VehicleImageBase(BaseModel):
     url: str
     alt: Optional[str] = None
@@ -70,5 +59,15 @@ class VehicleImageBase(BaseModel):
 class VehicleImageRead(VehicleImageBase):
     id: int
     vehicle_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+class VehicleReadWithImages(VehicleRead):
+    images: List[VehicleImageRead]
+
+class VehicleDiscoveryResponse(BaseModel):
+    total: int
+    vehicles: List[VehicleReadWithImages]
+    filters_applied: Dict[str, Any]
 
     model_config = ConfigDict(from_attributes=True)

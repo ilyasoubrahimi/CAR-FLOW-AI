@@ -3,20 +3,17 @@ from datetime import datetime
 from typing import List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from pydantic import BaseModel
 from app.models.reservation import PricingRule, Extra
 from app.models.vehicle import Vehicle
 
-class PricingBreakdown:
-    def __init__(self, subtotal: Decimal, discount: Decimal, extras_total: Decimal, delivery_fee: Decimal, total: Decimal, currency: str):
-        self.subtotal = subtotal
-        self.discount = discount
-        self.extras_total = extras_total
-        self.delivery_fee = delivery_fee
-        self.total = total
-        self.currency = currency
-
-    def to_dict(self):
-        return self.__dict__
+class PricingBreakdown(BaseModel):
+    subtotal: Decimal
+    discount: Decimal
+    extras_total: Decimal
+    delivery_fee: Decimal
+    total: Decimal
+    currency: str
 
 class PricingService:
     def __init__(self, session: AsyncSession):

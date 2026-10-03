@@ -81,10 +81,12 @@ class ReservationService:
             # This prevents race conditions where two users confirm the same vehicle
             stmt = select(Vehicle).where(Vehicle.id == res.vehicle_id).with_for_update()
             result = await self.session.execute(stmt)
-            await result.scalar()
+            vehicle = result.scalar()
 
             # 3. RE-VALIDATE AVAILABILITY while lock is held
-            if not await self.availability_service.is_vehicle_available(res.vehicle_id, res.pickup_datetime, res.return_datetime):
+            if not await self.availability_service.is_vehicle_available(
+                res.vehicle_id, res.pickup_datetime, res.return_datetime, ignore_reservation_id=res.id
+            ):
                 raise ValueError("Vehicle is no longer available")
 
             # 4. Update Status

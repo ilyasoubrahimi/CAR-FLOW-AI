@@ -38,7 +38,7 @@ class AssistantService:
             params = await self.provider.extract_parameters(text, {"vehicle_id": "integer"})
             vehicle_id = params.get("vehicle_id", 1)
             quote = await self._tool_calculate_quote(vehicle_id=vehicle_id)
-            tools_results["quote"] = quote
+            tools_results["quote"] = quote.model_dump() if hasattr(quote, "model_dump") else quote
 
         # 4. Generate Response
         history = await self._get_conversation_history(conversation_id)
@@ -82,8 +82,32 @@ class AssistantService:
         repo = VehicleRepository(self.session)
         if category:
             # Use the newly implemented search_vehicles for filtered results
-            return await repo.search_vehicles(category=category)
-        return await repo.search_vehicles()
+            vehicles = await repo.search_vehicles(category=category)
+        else:
+            vehicles = await repo.search_vehicles()
+
+        # Convert Vehicle models to dictionaries to avoid Pydantic serialization errors in the response
+        return [
+            {
+                "id": v.id,
+                "slug": v.slug,
+                "brand": v.brand,
+                "model": v.model,
+                "year": v.year,
+                "category": v.category,
+                "transmission": v.transmission,
+                "fuel": v.fuel,
+                "seats": v.seats,
+                "luggage": v.luggage,
+                "air_conditioning": v.air_conditioning,
+                "description": v.description,
+                "short_description": v.short_description,
+                "daily_price": float(v.daily_price),
+                "status": v.status,
+                "featured": v.featured,
+            }
+            for v in vehicles
+        ]
 
     async def _tool_calculate_quote(self, vehicle_id: int):
         service = PricingService(self.session)

@@ -8,11 +8,12 @@ class AvailabilityService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def is_vehicle_available(self, vehicle_id: int, pickup_date: datetime, return_date: datetime) -> bool:
+    async def is_vehicle_available(self, vehicle_id: int, pickup_date: datetime, return_date: datetime, ignore_reservation_id: int = None) -> bool:
         """
         A vehicle is unavailable if there is any reservation that:
         1. Is not CANCELLED
         2. Overlaps with the requested date range
+        3. Is not the current reservation (if ignore_reservation_id is provided)
         """
         # Overlap logic: (StartA < EndB) AND (EndA > StartB)
         query = select(Reservation).where(
@@ -23,6 +24,8 @@ class AvailabilityService:
                 Reservation.return_datetime > pickup_date
             )
         )
+        if ignore_reservation_id:
+            query = query.where(Reservation.id != ignore_reservation_id)
 
         result = await self.session.execute(query)
         overlapping_reservations = result.scalars().all()

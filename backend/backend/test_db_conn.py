@@ -1,7 +1,9 @@
 import asyncio
 import asyncpg
 import os
+import pytest
 
+@pytest.mark.asyncio
 async def test_connection():
     # Get the DB URL from the same logic as the tests
     # Using a hardcoded one for a quick check, but we'll use the env/settings logic
@@ -30,9 +32,9 @@ async def test_connection():
 
         await conn.close()
         print("Connection closed cleanly.")
-
     except Exception as e:
         print(f"Connection failed: {e}")
+        raise e
 
 if __name__ == "__main__":
     asyncio.run(test_connection())
