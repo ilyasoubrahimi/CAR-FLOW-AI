@@ -6,12 +6,13 @@ from app.core.database import AsyncSessionLocal
 from app.core.seed import SEED_VEHICLES
 from app.models.vehicle import Vehicle, Location, Company, User
 from app.core.security import get_password_hash
+from app.core.logging import logger
 
 async def seed_database():
     # CRITICAL: Admin password must be provided via environment variable
     admin_password = os.environ.get("ADMIN_SEED_PASSWORD")
     if not admin_password:
-        print("ERROR: ADMIN_SEED_PASSWORD environment variable is required to seed the database.")
+        logger.error("ADMIN_SEED_PASSWORD environment variable is required to seed the database.")
         return
 
     async with AsyncSessionLocal() as session:
@@ -29,9 +30,9 @@ async def seed_database():
             )
             session.add(company)
             await session.flush()
-            print("Company seeded.")
+            logger.info("Company seeded.")
         else:
-            print("Company already exists, skipping.")
+            logger.info("Company already exists, skipping.")
 
         # 2. Seed Location (Idempotent)
         res_loc = await session.execute(select(Location).where(Location.slug == "marrakech-agency"))
@@ -48,9 +49,9 @@ async def seed_database():
             )
             session.add(location)
             await session.flush()
-            print("Location seeded.")
+            logger.info("Location seeded.")
         else:
-            print("Location already exists, skipping.")
+            logger.info("Location already exists, skipping.")
 
         # 3. Seed Admin User (Idempotent)
         res_user = await session.execute(select(User).where(User.username == "admin"))
@@ -64,9 +65,9 @@ async def seed_database():
                 role="ADMIN"
             )
             session.add(admin)
-            print("Admin user seeded.")
+            logger.info("Admin user seeded.")
         else:
-            print("Admin user already exists, skipping.")
+            logger.info("Admin user already exists, skipping.")
 
         # 4. Seed Vehicles (Idempotent by slug)
         for v in SEED_VEHICLES:
@@ -91,7 +92,7 @@ async def seed_database():
                 session.add(vehicle)
 
         await session.commit()
-        print("Seed process completed successfully!")
+        logger.info("Seed process completed successfully!")
 
 if __name__ == "__main__":
     asyncio.run(seed_database())

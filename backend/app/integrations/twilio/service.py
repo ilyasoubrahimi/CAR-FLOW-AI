@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 import httpx
+from app.core.logging import logger
 
 class MessagingService(ABC):
     @abstractmethod
@@ -26,12 +27,12 @@ class TwilioMessagingService(MessagingService):
         # In a real environment, we use basic auth with account_sid and auth_token
         # For the demo, we'll simulate the call if credentials aren't set
         if self.account_sid == "your_twilio_account_sid":
-            print(f"[MOCK] Twilio sending to {recipient}: {content}")
+            logger.info(f"[MOCK] Twilio sending to {recipient}: {content}")
             return True
 
         try:
             response = await self.client.post(url, data=data, auth=(self.account_sid, self.auth_token))
             return response.status_code == 201
         except Exception as e:
-            print(f"Twilio Error: {e}")
+            logger.error(f"Twilio Error: {e}")
             return False

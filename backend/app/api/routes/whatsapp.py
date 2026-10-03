@@ -6,6 +6,7 @@ from app.integrations.ai.provider import MockAIProvider
 from app.models.assistant import Conversation, Message
 from app.models.reservation import Customer
 from sqlalchemy.future import select
+from app.core.logging import logger
 import hmac
 import hashlib
 
@@ -67,6 +68,6 @@ async def whatsapp_webhook(
     )
 
     # 4. Send Response (Mocked)
-    print(f"[WHATSAPP RESPONSE to {from_number}]: {response['response']}")
+    logger.info(f"[WHATSAPP RESPONSE to {from_number}]: {response['response']}")
 
     return {"status": "success"}

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 import httpx
 from app.core.config import settings
+from app.core.logging import logger
 
 class NotificationService(ABC):
     @abstractmethod
@@ -20,8 +21,8 @@ class TwilioWhatsAppService:
 
     async def send(self, recipient: str, body: str) -> bool:
         if not self.account_sid or not self.auth_token:
-            print("[WARN] Twilio credentials not configured. Simulation mode.")
-            print(f"[SIMULATED WHATSAPP to {recipient}]: {body}")
+            logger.warning("Twilio credentials not configured. Simulation mode.")
+            logger.info(f"[SIMULATED WHATSAPP to {recipient}]: {body}")
             return True
 
         url = f"https://api.twilio.com/2010-04-01/Accounts/{self.account_sid}/Messages.json"
@@ -35,7 +36,7 @@ class TwilioWhatsAppService:
                 response = await client.post(url, data=data, auth=(self.account_sid, self.auth_token))
                 return response.status_code == 201
         except Exception as e:
-            print(f"Twilio Error: {e}")
+            logger.error(f"Twilio Error: {e}")
             return False
 
 class RealNotificationService(NotificationService):
@@ -44,10 +45,10 @@ class RealNotificationService(NotificationService):
 
     async def send_email(self, recipient: str, subject: str, body: str) -> bool:
         if not settings.EMAIL_PROVIDER or not settings.EMAIL_API_KEY:
-            print(f"[WARN] Email provider not configured. Simulation mode: {recipient} < {subject}")
+            logger.warning(f"Email provider not configured. Simulation mode: {recipient} < {subject}")
             return True
 
-        print(f"[EMAIL] Sending via {settings.EMAIL_PROVIDER} to {recipient}")
+        logger.info(f"[EMAIL] Sending via {settings.EMAIL_PROVIDER} to {recipient}")
         return True
 
     async def send_whatsapp(self, recipient: str, body: str) -> bool:
