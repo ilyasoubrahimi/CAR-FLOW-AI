@@ -1,12 +1,3 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
-from app.api.deps import get_db
-from app.repositories.vehicle import VehicleRepository
-from app.schemas.vehicle import VehicleRead, VehicleCreate, VehicleUpdate
-
-router = APIRouter()
-
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
@@ -14,8 +5,7 @@ from datetime import datetime
 from decimal import Decimal
 from app.api.deps import get_db
 from app.repositories.vehicle import VehicleRepository
-from app.schemas.vehicle import VehicleRead, VehicleCreate, VehicleUpdate, VehicleReadWithImages, VehicleDiscoveryResponse
-from app.models.vehicle import Vehicle
+from app.schemas.vehicle import VehicleRead, VehicleCreate, VehicleUpdate, VehicleDiscoveryResponse
 
 router = APIRouter()
 
@@ -35,9 +25,8 @@ async def read_vehicles(
     limit: int = 100,
     db: AsyncSession = Depends(get_db)
 ):
+    print("DEBUG: read_vehicles route called")
     repo = VehicleRepository(db)
-
-    # Search for vehicles based on filters
     vehicles = await repo.search_vehicles(
         pickup_date=pickup_date,
         return_date=return_date,
@@ -52,28 +41,11 @@ async def read_vehicles(
         skip=skip,
         limit=limit
     )
-
-    # To return VehicleReadWithImages, we need to load images for each vehicle
-    # In a production app, we'd use joinedload in the repository to avoid N+1
-    from app.models.vehicle import VehicleImage
-    from sqlalchemy import select
-
-    vehicles_with_images = []
-    for v in vehicles:
-        img_result = await db.execute(select(VehicleImage).where(VehicleImage.vehicle_id == v.id))
-        images = img_result.scalars().all()
-        # Manually construct the read model with images
-        vehicle_data = v.__dict__.copy()
-        vehicle_data.pop('images', None)
-        v_with_img = VehicleReadWithImages(
-            **vehicle_data,
-            images=images
-        )
-        vehicles_with_images.append(v_with_img)
+    print(f"DEBUG: repo.search_vehicles returned {len(vehicles)} vehicles")
 
     return VehicleDiscoveryResponse(
         total=len(vehicles),
-        vehicles=vehicles_with_images,
+        vehicles=vehicles,
         filters_applied={
             "category": category,
             "location_id": location_id,
@@ -82,7 +54,6 @@ async def read_vehicles(
             "sort_by": sort_by
         }
     )
-
 
 @router.get("/{slug}", response_model=VehicleRead)
 async def read_vehicle(

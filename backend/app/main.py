@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from sqlalchemy import text
 from fastapi.responses import JSONResponse
 from app.api.routes import vehicles, reservations, auth, availability, customers, company, extras, analytics, assistant, whatsapp, payments, locations
 from app.core.config import settings
@@ -37,7 +38,7 @@ async def health_check():
     try:
         engine = create_async_engine(settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://"))
         async with engine.connect() as conn:
-            await conn.execute("SELECT 1")
+            await conn.execute(text("SELECT 1"))
         health_status["checks"]["database"] = "ok"
         await engine.dispose()
     except Exception as e:

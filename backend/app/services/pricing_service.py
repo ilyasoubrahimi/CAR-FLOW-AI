@@ -15,6 +15,9 @@ class PricingBreakdown(BaseModel):
     total: Decimal
     currency: str
 
+    def to_dict(self) -> Dict[str, Any]:
+        return self.model_dump()
+
 class PricingService:
     def __init__(self, session: AsyncSession):
         self.session = session

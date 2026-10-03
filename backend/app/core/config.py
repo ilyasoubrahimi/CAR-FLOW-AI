@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: Optional[str] = None
     TWILIO_AUTH_TOKEN: Optional[str] = None
     TWILIO_WHATSAPP_NUMBER: Optional[str] = None
+    TWILIO_TEST_WHATSAPP_TO: Optional[str] = None
 
     AI_API_KEY: Optional[str] = None
     AI_MODEL: str = "gpt-4o"

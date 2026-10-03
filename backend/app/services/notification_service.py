@@ -21,22 +21,29 @@ class TwilioWhatsAppService:
 
     async def send(self, recipient: str, body: str) -> bool:
         if not self.account_sid or not self.auth_token:
-            logger.warning("Twilio credentials not configured. Simulation mode.")
-            logger.info(f"[SIMULATED WHATSAPP to {recipient}]: {body}")
-            return True
+            logger.error("Twilio credentials not configured. WhatsApp message failed.")
+            return False
+
+        # Normalize recipient: remove 'whatsapp:' prefix if present, then prepend it once
+        clean_recipient = recipient.replace("whatsapp:", "")
+
+        # Normalize from_number: remove 'whatsapp:' prefix if present, then prepend it once
+        clean_from = self.from_number.replace("whatsapp:", "")
 
         url = f"https://api.twilio.com/2010-04-01/Accounts/{self.account_sid}/Messages.json"
         data = {
-            "From": f"whatsapp:{self.from_number}",
-            "To": f"whatsapp:{recipient}",
+            "From": f"whatsapp:{clean_from}",
+            "To": f"whatsapp:{clean_recipient}",
             "Body": body
         }
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, data=data, auth=(self.account_sid, self.auth_token))
+                if response.status_code != 201:
+                    logger.error(f"Twilio API Error {response.status_code}: {response.text}")
                 return response.status_code == 201
         except Exception as e:
-            logger.error(f"Twilio Error: {e}")
+            logger.error(f"Twilio Connection Error: {e}")
             return False
 
 class RealNotificationService(NotificationService):

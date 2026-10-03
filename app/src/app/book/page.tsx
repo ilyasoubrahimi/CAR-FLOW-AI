@@ -48,8 +48,8 @@ function BookingContent() {
             return_date: returnDate,
             ...extras.reduce((acc, ex) => ({ ...acc, [ex]: "true" }), {})
           });
-          const data = await apiRequest<{ total_price: number }>(`/availability/quote?${params.toString()}`);
-          setTotalPrice(data.total_price);
+          const data = await apiRequest<{ total: number }>(`/availability/quote?${params.toString()}`);
+          setTotalPrice(data.total);
         } catch (err) {
           console.error("Price calculation failed:", err);
         }

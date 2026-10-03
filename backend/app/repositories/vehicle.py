@@ -1,7 +1,9 @@
+from datetime import datetime
+from decimal import Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List, Optional
-from app.models.vehicle import Vehicle
+from app.models.vehicle import Vehicle, VehicleStatus
 from app.schemas.vehicle import VehicleRead, VehicleCreate, VehicleUpdate
 
 class VehicleRepository:
@@ -23,17 +25,15 @@ class VehicleRepository:
         skip: int = 0,
         limit: int = 100
     ) -> List[Vehicle]:
-        """
-        Advanced search for vehicles with filtering and availability checks.
-        """
         from sqlalchemy import and_, or_, not_, exists
         from sqlalchemy.orm import selectinload
         from app.models.reservation import Reservation, ReservationStatus
 
+        print("DEBUG: search_vehicles called")
         query = select(Vehicle).options(selectinload(Vehicle.images))
 
-        # 1. Basic Availability (if dates provided)
         if pickup_date and return_date:
+            print(f"DEBUG: Filtering by dates: {pickup_date} to {return_date}")
             overlap_exists = exists().where(
                 and_(
                     Reservation.vehicle_id == Vehicle.id,
@@ -44,10 +44,9 @@ class VehicleRepository:
             )
             query = query.where(not_(overlap_exists))
 
-        # 2. Status Filter
-        query = query.where(Vehicle.status == "AVAILABLE")
+        query = query.where(Vehicle.status == VehicleStatus.AVAILABLE)
+        print("DEBUG: Filtered by AVAILABLE status")
 
-        # 3. Characteristic Filters
         if category:
             query = query.where(Vehicle.category == category)
         if transmission:
@@ -63,7 +62,6 @@ class VehicleRepository:
         if featured_only:
             query = query.where(Vehicle.featured == True)
 
-        # 4. Sorting
         if sort_by == "price_asc":
             query = query.order_by(Vehicle.daily_price.asc())
         elif sort_by == "price_desc":
@@ -73,11 +71,11 @@ class VehicleRepository:
         else:
             query = query.order_by(Vehicle.id.asc())
 
-        # 5. Pagination
         query = query.offset(skip).limit(limit)
-
         result = await self.session.execute(query)
-        return result.scalars().all()
+        vehicles = result.scalars().all()
+        print(f"DEBUG: Found {len(vehicles)} vehicles")
+        return vehicles
 
     async def get_by_slug(self, slug: str) -> Optional[Vehicle]:
         result = await self.session.execute(select(Vehicle).where(Vehicle.slug == slug))
@@ -94,10 +92,8 @@ class VehicleRepository:
         vehicle = await self.get_by_id(vehicle_id)
         if not vehicle:
             return None
-
         for key, value in update_data.model_dump(exclude_unset=True).items():
             setattr(vehicle, key, value)
-
         await self.session.commit()
         await self.session.refresh(vehicle)
         return vehicle

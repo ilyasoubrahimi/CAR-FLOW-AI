@@ -37,7 +37,7 @@ async def create_reservation(
     try:
         return await service.create_draft(
             request.vehicle_id,
-            request.customer_id,
+            request.customer,
             request.pickup_datetime,
             request.return_datetime,
             request.extra_ids

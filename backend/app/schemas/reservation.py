@@ -3,15 +3,21 @@ from typing import List, Optional
 from datetime import datetime
 from decimal import Decimal
 
+class CustomerCreate(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+    phone: str
+    passport_number: str
+
 class ReservationBase(BaseModel):
     vehicle_id: int
-    customer_id: int
     pickup_datetime: datetime
     return_datetime: datetime
     extra_ids: Optional[List[int]] = []
 
 class ReservationCreate(ReservationBase):
-    pass
+    customer: CustomerCreate
 
 class ReservationRead(BaseModel):
     id: int
