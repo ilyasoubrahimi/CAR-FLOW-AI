@@ -1,4 +1,5 @@
 import React from "react";
+import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/layout/Header";
 import { AIAssistant } from "@/components/ai/AIAssistant";
